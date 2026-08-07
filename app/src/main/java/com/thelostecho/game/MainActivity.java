@@ -1,27 +1,38 @@
 package com.thelostecho.game;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
-
-import com.thelostecho.game.core.GameSurfaceView;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 /**
- * Single activity hosting the whole game. All game rendering happens on a
- * SurfaceView; no XML layout is used beyond the theme.
+ * WebView host for the JavaScript game. All game logic lives in
+ * app/src/main/assets/javascript/ (mirrored from the repo's javascript/ dir).
  */
 public class MainActivity extends Activity {
 
-    private GameSurfaceView gameView;
+    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         hideSystemUi();
-        gameView = new GameSurfaceView(this);
-        setContentView(gameView);
+        webView = new WebView(this);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        s.setAllowFileAccess(true);
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient());
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        setContentView(webView);
+        webView.loadUrl("file:///android_asset/index.html");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -29,24 +40,20 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         hideSystemUi();
-        if (gameView != null) {
-            gameView.onResumeGame();
-        }
+        if (webView != null) webView.onResume();
     }
 
     @Override
     protected void onPause() {
+        if (webView != null) webView.onPause();
         super.onPause();
-        if (gameView != null) {
-            gameView.onPauseGame();
-        }
     }
 
     @Override
     protected void onDestroy() {
-        if (gameView != null) {
-            gameView.onDestroyGame();
-            gameView = null;
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
         }
         super.onDestroy();
     }
@@ -54,9 +61,7 @@ public class MainActivity extends Activity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) {
-            hideSystemUi();
-        }
+        if (hasFocus) hideSystemUi();
     }
 
     private void hideSystemUi() {
