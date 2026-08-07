@@ -61,3 +61,6 @@ jobs:
         name: build-reports
         path: app/build/reports/
         if-no-files-found: ignore
+    
+    - name: Verify APKs exist
+      run: ls -la app/build/outputs/apk/debug/ app/build/outputs/apk/release/ || exit 1
